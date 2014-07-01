@@ -194,7 +194,7 @@ def extract_category(rank_page_lxml):
 		con = mdb.connect(DB_HOST, DB_USER, DB_PASS, DB_NAME)
 		with con:
 			cur = con.cursor()
-			cur.execute("select category_name from categories where \
+			cur.execute("SELECT category_name FROM categories WHERE \
 				category_url='%s'" % str(rank_page_lxml.base_url))
 			results = cur.fetchall()
 			category = results[0][0]
@@ -297,12 +297,12 @@ def create_report(num_products=500):
 	con = mdb.connect(DB_HOST, DB_USER, DB_PASS, DB_NAME)
 	with con:
 		cur = con.cursor()
-		cur.execute("select slopes.slope, slopes.asin, products.product_name, \
+		cur.execute("SELECT slopes.slope, slopes.asin, products.product_name, \
 			products.manufacturer_name, categories.category_name, \
-			products.product_url from slopes inner join products on \
-			slopes.asin=products.asin inner join categories on \
-			slopes.category_url=categories.category_url order by slope asc \
-			limit %s" % num_products)
+			products.product_url FROM slopes INNER JOIN products ON \
+			slopes.asin=products.asin INNER JOIN categories ON \
+			slopes.category_url=categories.category_url ORDER BY slope ASC \
+			LIMIT %s" % num_products)
 		numlines = int(cur.rowcount)
 		filename = 'Top ' + str(num_products) + ' Fastest Moving Products - ' \
 		+ str(datetime.date.today())
@@ -328,17 +328,17 @@ def run_analytics():
 	con = mdb.connect(DB_HOST, DB_USER, DB_PASS, DB_NAME)
 	with con:
 		cur = con.cursor()
-		cur.execute("select category_url from categories")
+		cur.execute("SELECT category_url FROM categories")
 		category_results = cur.fetchall()
 		for category_results_line in category_results:
 			category_url = category_results_line[0]
 			print 'analyzing category: ' + category_url
-			cur.execute("select distinct scrape_date from rankings where \
+			cur.execute("SELECT DISTINCT scrape_date FROM rankings WHERE \
 				category_url='%s'" % category_url)
 			asin_results = cur.fetchall()
 			if len(asin_results) < 2:
 				continue
-			cur.execute("select distinct asin from rankings where \
+			cur.execute("SELECT DISTINCT asin FROM rankings WHERE \
 				category_url='%s'" % category_url)
 			asin_results = cur.fetchall()
 			if len(asin_results) == 0:
@@ -348,18 +348,18 @@ def run_analytics():
 				slope = calc_slope(asin, category_url)
 				if slope is None:
 					continue
-				cur.execute("select * from slopes where asin='%s' and \
+				cur.execute("SELECT * FROM slopes WHERE asin='%s' AND \
 					category_url='%s'" % (asin, category_url))
 				results = cur.fetchall()
 				if results == ():
 					print slope
 					print category_url
 					print asin
-					cur.execute("insert into slopes(slope, category_url, asin) \
+					cur.execute("INSERT INTO slopes(slope, category_url, asin) \
 						values(%s, '%s', '%s')" % (slope, category_url, asin))
 					con.commit()
 				else:
-					cur.execute("update slopes set slope=%s where \
+					cur.execute("UPDATE slopes SET slope=%s WHERE \
 						category_url='%s' and asin='%s'" % (slope, \
 							category_url, asin))
 					con.commit()
@@ -381,8 +381,8 @@ def calc_slope(asin, category_url):
 	con = mdb.connect(DB_HOST, DB_USER, DB_PASS, DB_NAME)
 	with con:
 		cur = con.cursor()
-		cur.execute("select scrape_date, rank from rankings where \
-			category_url='%s' and asin='%s' order by scrape_date asc" % \
+		cur.execute("SELECT scrape_date, rank FROM rankings WHERE \
+			category_url='%s' AND asin='%s' ORDER BY scrape_date ASC" % \
 			(category_url, asin))
 		results = cur.fetchall()
 		if len(results) == 0 or len(results) == 1:
@@ -423,23 +423,23 @@ def last_rank_scraped(category_url):
 	with con:
 		cur = con.cursor()
 		#Calc last scrape date
-		cur.execute("select scrape_date from rankings where category_url='%s' \
-		order by scrape_date desc limit 1" % category_url)
+		cur.execute("SELECT scrape_date FROM rankings WHERE category_url='%s' \
+		ORDER BY scrape_date DESC LIMIT 1" % category_url)
 		scrape_date_results = cur.fetchall()
 		if scrape_date_results == ():
 			return 1
 		last_scrape = scrape_date_results[0][0]
 		#Calc highest rank scraped in last scrape
-		cur.execute("select rank from rankings where category_url='%s' and \
-		scrape_date='%s' order by rank desc limit 1" % (category_url, \
+		cur.execute("SELECT rank FROM rankings WHERE category_url='%s' AND \
+		scrape_date='%s' ORDER BY rank DESC LIMIT 1" % (category_url, \
 			last_scrape))
 		highest_rank_results = cur.fetchall()
 		if highest_rank_results == ():
 			return 1
 		highest_rank = highest_rank_results[0][0]
 		#Calc max rank scraped ever
-		cur.execute("select rank from rankings where category_url='%s' order \
-		by rank desc limit 1" % category_url)
+		cur.execute("SELECT rank FROM rankings WHERE category_url='%s' order \
+		by rank DESC LIMIT 1" % category_url)
 		max_rank_results = cur.fetchall()
 		if max_rank_results == ():
 			return 1
@@ -456,7 +456,7 @@ def calc_categories_to_scrape(days=5):
 	con = mdb.connect(DB_HOST, DB_USER, DB_PASS, DB_NAME)
 	with con:
 		cur = con.cursor()
-		cur.execute("select category_url from categories")
+		cur.execute("SELECT category_url FROM categories")
 		results = cur.fetchall()
 		for line in results:
 			category_url = line[0]
@@ -467,8 +467,8 @@ def calc_categories_to_scrape(days=5):
 				continue
 			#Add to queue categories that haven't been scraped or are older
 			# than days
-			cur.execute("select scrape_date from rankings where \
-				category_url='%s' order by scrape_date desc limit 1" % \
+			cur.execute("SELECT scrape_date FROM rankings WHERE \
+				category_url='%s' ORDER BY scrape_date DESC limit 1" % \
 				category_url)
 			scrape_date_results = cur.fetchall()
 			if scrape_date_results == ():
