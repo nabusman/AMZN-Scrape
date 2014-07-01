@@ -1,5 +1,6 @@
 #!/usr/bin/env python2.7
-import re, mechanize, sys, io, os, traceback, lxml.html, datetime, urllib2, signal, telnetlib, time, smtplib, fcntl
+import re, mechanize, sys, io, os, traceback, lxml.html, datetime, urllib2, \
+signal, telnetlib, time, smtplib, fcntl
 import MySQLdb as mdb
 
 #Ensure only one instance is running
@@ -62,13 +63,16 @@ def process_category(rank_page_url, start_rank = 1, max_rank = 9600):
 				if rank_page_lxml == False:
 					retries = 0
 					while True:
-						print "Error with reaching start page on rank_page_lxml: " + previous_rank_page_lxml.base_url
-						log("Error with reaching start page on rank_page_lxml: " + previous_rank_page_lxml.base_url)
+						print "Error with reaching start page on \
+						rank_page_lxml: " + previous_rank_page_lxml.base_url
+						log("Error with reaching start page on rank_page_lxml:\
+						 " + previous_rank_page_lxml.base_url)
 						if retries > 50:
 							return False, category
 						retries += 1
 						print "Retrying..."
-						rank_page_lxml = get_page(previous_rank_page_lxml.base_url)
+						rank_page_lxml = \
+						get_page(previous_rank_page_lxml.base_url)
 						rank_page_lxml = hit_next(rank_page_lxml)
 						if rank_page_lxml != False:
 							retries = 0
@@ -80,7 +84,8 @@ def process_category(rank_page_url, start_rank = 1, max_rank = 9600):
 			try:
 				ranks_names_urls = extract_ranks_names_urls(rank_page_lxml)
 			except Exception, e:
-				print "Error in extracting ranks, names, and urls from rank page: " + rank_page_lxml.base_url
+				print "Error in extracting ranks, names, and urls from rank \
+				page: " + rank_page_lxml.base_url
 				print e
 				log(e)
 				log(traceback.print_exc())
@@ -89,8 +94,10 @@ def process_category(rank_page_url, start_rank = 1, max_rank = 9600):
 			if ranks_names_urls == []:
 				print 'retries: ' + str(retries)
 				if retries > 50:
-					log("Error in extracting ranks names and urls from: " + rank_page_lxml.base_url)
-					raise Exception("Error in extracting ranks names and urls from: " + rank_page_lxml.base_url)
+					log("Error in extracting ranks names and urls from: " + \
+						rank_page_lxml.base_url)
+					raise Exception("Error in extracting ranks names and urls \
+						from: " + rank_page_lxml.base_url)
 				retries += 1
 				print "Rank name url list is empty! Retrying..."
 				rank_page_lxml = get_page(rank_page_lxml.base_url)
@@ -105,8 +112,10 @@ def process_category(rank_page_url, start_rank = 1, max_rank = 9600):
 				asin = extract_asin(url)
 				manufacturer, price, sold_by = process_product_page(url)
 				todays_date = str(datetime.date.today())
-				#[category_url, rank, asin, product_name, manufacturer_name, price, selling_status, product_url, scrape_date]
-				save_product([rank_page_url, rank, asin, name, manufacturer, price, sold_by, url, todays_date])
+				#[category_url, rank, asin, product_name, manufacturer_name,
+				# price, selling_status, product_url, scrape_date]
+				save_product([rank_page_url, rank, asin, name, manufacturer, \
+					price, sold_by, url, todays_date])
 	
 			try:
 				last_rank = ranks_names_urls[-1][0]
@@ -133,16 +142,19 @@ def process_category(rank_page_url, start_rank = 1, max_rank = 9600):
 def extract_ranks_names_urls(rank_page_lxml):
 	"""Extracts the ranks, names, and urls given rank page html in unicode"""
 	if DEBUG:
-		print "[DEBUG] Extracting ranks, names, urls from rank page: " + rank_page_lxml.base_url
+		print "[DEBUG] Extracting ranks, names, urls from rank page: " + \
+		rank_page_lxml.base_url
 	ranks_names_urls = []
-	classes = ['result firstRow product', 'result product', 'result lastRow product']
+	classes = ['result firstRow product', 'result product', 'result lastRow \
+	product']
 	
 	for name in classes:
 		results = rank_page_lxml.find_class(name)
 		for result in results:
 			
 			try:
-				rank = int(re.sub("\.", '', result.find_class('number')[0].text_content()))
+				rank = int(re.sub("\.", '', \
+					result.find_class('number')[0].text_content()))
 			except:
 				log('Rank error on page')
 				rank = 'Error'
@@ -169,9 +181,11 @@ def extract_ranks_names_urls(rank_page_lxml):
 def extract_category(rank_page_lxml):
 	"""Extracts the category given rank page html in unicode"""
 	if DEBUG:
-		print "[DEBUG] Extracting category from rank page: " + rank_page_lxml.base_url
+		print "[DEBUG] Extracting category from rank page: " +\
+		 rank_page_lxml.base_url
 	try:
-		category = rank_page_lxml.cssselect('h1#breadCrumb')[0].text_content().strip()
+		category = \
+		rank_page_lxml.cssselect('h1#breadCrumb')[0].text_content().strip()
 		category = category.split("\n")[-1].strip()
 	except:
 		log('Category error on page')
@@ -180,7 +194,8 @@ def extract_category(rank_page_lxml):
 		con = mdb.connect(DB_HOST, DB_USER, DB_PASS, DB_NAME)
 		with con:
 			cur = con.cursor()
-			cur.execute("select category_name from categories where category_url='%s'" % str(rank_page_lxml.base_url))
+			cur.execute("select category_name from categories where \
+				category_url='%s'" % str(rank_page_lxml.base_url))
 			results = cur.fetchall()
 			category = results[0][0]
 	return category
@@ -190,7 +205,8 @@ def extract_category(rank_page_lxml):
 def process_product_page(product_url):
 	"""Scrapes and returns all the data in the given product url"""
 	if DEBUG:
-		print "[DEBUG] Extracting manufacturer, price, and sold by from product page: " + product_url
+		print "[DEBUG] Extracting manufacturer, price, and sold by from \
+		product page: " + product_url
 	product_page_lxml = get_page(product_url)
 	if product_page_lxml == False:
 		print "Scrape of product page failed!!! URL: " + product_url
@@ -210,7 +226,8 @@ def process_product_page(product_url):
 
 
 def extract_sold_by(product_page_lxml):
-	"""Extracts who the product is sold by given a product page html in unicode"""
+	"""Extracts who the product is sold by given a product page html in
+	unicode"""
 	sold_by = u'Not Sold by Amazon'
 	
 	try:
@@ -223,7 +240,8 @@ def extract_sold_by(product_page_lxml):
 			elif 'Ships from and sold by Amazon.com' in search_result:
 				sold_by = u'Sold by Amazon'
 				break
-			elif 'Ships from and sold by Amazon Digital Services' in search_result:
+			elif 'Ships from and sold by Amazon Digital Services' in \
+			search_result:
 				sold_by = u'Sold by Amazon'
 				break
 			else:
@@ -261,7 +279,8 @@ def extract_manufacturer(product_page_lxml):
 		for result in results:
 			test = result.cssselect('h1.parseasinTitle')
 			if test != []:
-				manufacturer = re.sub(regex_by, '', result.cssselect('span')[1].text_content()).strip()
+				manufacturer = re.sub(regex_by, '', \
+					result.cssselect('span')[1].text_content()).strip()
 				break
 	except:
 		log('Manufacturer error on page')
@@ -271,28 +290,36 @@ def extract_manufacturer(product_page_lxml):
 
 #-- Database Functions --#
 def create_report(num_products=500):
-	"""Creates and mails a report of the top num_products=500 fastest moving products
-	Final list format: [slope, asin, product_name, manufacturer_name, category_name, product_url]"""
+	"""Creates and mails a report of the top num_products=500 fastest moving 
+	products
+	Final list format: [slope, asin, product_name, manufacturer_name, 
+	category_name, product_url]"""
 	con = mdb.connect(DB_HOST, DB_USER, DB_PASS, DB_NAME)
 	with con:
 		cur = con.cursor()
-		cur.execute("select slopes.slope, slopes.asin, products.product_name, products.manufacturer_name, \
-		categories.category_name, products.product_url from slopes inner join products on \
-		slopes.asin=products.asin inner join categories on slopes.category_url=categories.category_url \
-		order by slope asc limit %s" % num_products)
+		cur.execute("select slopes.slope, slopes.asin, products.product_name, \
+			products.manufacturer_name, categories.category_name, \
+			products.product_url from slopes inner join products on \
+			slopes.asin=products.asin inner join categories on \
+			slopes.category_url=categories.category_url order by slope asc \
+			limit %s" % num_products)
 		numlines = int(cur.rowcount)
-		filename = 'Top ' + str(num_products) + ' Fastest Moving Products - ' + str(datetime.date.today())
+		filename = 'Top ' + str(num_products) + ' Fastest Moving Products - ' \
+		+ str(datetime.date.today())
 		file_path = os.path.join('reports/', filename)
 		with io.open(file_path, 'w') as fmpfile:
 			for i in range(numlines):
 				line = cur.fetchone()
-				fmpfile.write(unicode(line[0]).strip() + '|' + unicode(line[1]).strip() + '|' + \
-				unicode(line[2]).strip() + '|' + unicode(line[3]).strip() + '|' + unicode(line[4]).strip() \
-				+ '|' + unicode(line[5]).strip() + '|' + "\n")
+				fmpfile.write(unicode(line[0]).strip() + '|' + \
+					unicode(line[1]).strip() + '|' + unicode(line[2]).strip() \
+					+ '|' + unicode(line[3]).strip() + '|' + \
+					unicode(line[4]).strip() + '|' + unicode(line[5]).strip() \
+					+ '|' + "\n")
 		return file_path
 
 def run_analytics():
-	"""Runs analytics on the rank data in the database and emails a list of the top 500 fastest rising products
+	"""Runs analytics on the rank data in the database and emails a list of the 
+	top 500 fastest rising products
 	1. Pull all asins and calculate slope
 	2. update the value for the slope in products table
 	3. when done updating all slopes, return asin's sorted dsc by slope...
@@ -306,11 +333,13 @@ def run_analytics():
 		for category_results_line in category_results:
 			category_url = category_results_line[0]
 			print 'analyzing category: ' + category_url
-			cur.execute("select distinct scrape_date from rankings where category_url='%s'" % category_url)
+			cur.execute("select distinct scrape_date from rankings where \
+				category_url='%s'" % category_url)
 			asin_results = cur.fetchall()
 			if len(asin_results) < 2:
 				continue
-			cur.execute("select distinct asin from rankings where category_url='%s'" % category_url)
+			cur.execute("select distinct asin from rankings where \
+				category_url='%s'" % category_url)
 			asin_results = cur.fetchall()
 			if len(asin_results) == 0:
 				continue
@@ -319,33 +348,42 @@ def run_analytics():
 				slope = calc_slope(asin, category_url)
 				if slope is None:
 					continue
-				cur.execute("select * from slopes where asin='%s' and category_url='%s'" % (asin, category_url))
+				cur.execute("select * from slopes where asin='%s' and \
+					category_url='%s'" % (asin, category_url))
 				results = cur.fetchall()
 				if results == ():
 					print slope
 					print category_url
 					print asin
-					cur.execute("insert into slopes(slope, category_url, asin) values(%s, '%s', '%s')" % (slope, category_url, asin))
+					cur.execute("insert into slopes(slope, category_url, asin) \
+						values(%s, '%s', '%s')" % (slope, category_url, asin))
 					con.commit()
 				else:
-					cur.execute("update slopes set slope=%s where category_url='%s' and asin='%s'" % (slope, category_url, asin))
+					cur.execute("update slopes set slope=%s where \
+						category_url='%s' and asin='%s'" % (slope, \
+							category_url, asin))
 					con.commit()
 	return True
 
 
 def calc_slope(asin, category_url):
 	"""Calculates the slope given asin and category_url
-	1. create a list of lists, with each point for each asin [[x,y], [x,y]]: x is days (starting from 0); y is rank
-	2. given the list calculate the following variables: num_of_points, sum_of_x, sum_of_y, sum_of_xy, sum_of_x_squared
+	1. create a list of lists, with each point for each asin [[x,y], [x,y]]: x 
+	is days (starting from 0); y is rank
+	2. given the list calculate the following variables: num_of_points, 
+	sum_of_x, sum_of_y, sum_of_xy, sum_of_x_squared
 	3. if num_of_points < 3: skip the asin
-	4. calculate the slope of the line: ((num_of_points * sum_of_xy) - (sum_of_x * sum_of_y)) / ((num_of_points * sum_of_x_squared) - sum_of_x^2)
+	4. calculate the slope of the line: ((num_of_points * sum_of_xy) - 
+		(sum_of_x * sum_of_y)) / ((num_of_points * sum_of_x_squared) - 
+		sum_of_x^2)
 	"""
 	datapoints = []
 	con = mdb.connect(DB_HOST, DB_USER, DB_PASS, DB_NAME)
 	with con:
 		cur = con.cursor()
-		cur.execute("select scrape_date, rank from rankings where category_url='%s' and \
-		asin='%s' order by scrape_date asc" % (category_url, asin))
+		cur.execute("select scrape_date, rank from rankings where \
+			category_url='%s' and asin='%s' order by scrape_date asc" % \
+			(category_url, asin))
 		results = cur.fetchall()
 		if len(results) == 0 or len(results) == 1:
 			return None
@@ -363,7 +401,8 @@ def calc_slope(asin, category_url):
 			sum_of_xy += (datum[0] * datum[1])
 			sum_of_x_squared += (datum[0] * datum[0])
 		try:
-			slope = ((num_of_points * sum_of_xy) - (sum_of_x * sum_of_y)) / ((num_of_points * sum_of_x_squared) - (sum_of_x * sum_of_x))
+			slope = ((num_of_points * sum_of_xy) - (sum_of_x * sum_of_y)) / \
+			((num_of_points * sum_of_x_squared) - (sum_of_x * sum_of_x))
 		except Exception, e:
 			print datapoints
 			print num_of_points
@@ -376,9 +415,10 @@ def calc_slope(asin, category_url):
 
 
 def last_rank_scraped(category_url):
-	"""Calculates the highest rank scraped on the latest run and then compares that with older scrapes
-	if a higher rank has been scraped previously that means the lastest run was incomplete and returns
-	the highest rank of the latest run, if the category was completely scraped returns 1"""
+	"""Calculates the highest rank scraped on the latest run and then compares 
+	that with older scrapes if a higher rank has been scraped previously that 
+	means the lastest run was incomplete and returns the highest rank of the 
+	latest run, if the category was completely scraped returns 1"""
 	con = mdb.connect(DB_HOST, DB_USER, DB_PASS, DB_NAME)
 	with con:
 		cur = con.cursor()
@@ -391,7 +431,8 @@ def last_rank_scraped(category_url):
 		last_scrape = scrape_date_results[0][0]
 		#Calc highest rank scraped in last scrape
 		cur.execute("select rank from rankings where category_url='%s' and \
-		scrape_date='%s' order by rank desc limit 1" % (category_url, last_scrape))
+		scrape_date='%s' order by rank desc limit 1" % (category_url, \
+			last_scrape))
 		highest_rank_results = cur.fetchall()
 		if highest_rank_results == ():
 			return 1
@@ -424,9 +465,11 @@ def calc_categories_to_scrape(days=5):
 			if start_rank != 1:
 				categories_to_scrape.append([category_url, start_rank])
 				continue
-			#Add to queue categories that haven't been scraped or are older than days
-			cur.execute("select scrape_date from rankings where category_url='%s' \
-			order by scrape_date desc limit 1" % category_url)
+			#Add to queue categories that haven't been scraped or are older
+			# than days
+			cur.execute("select scrape_date from rankings where \
+				category_url='%s' order by scrape_date desc limit 1" % \
+				category_url)
 			scrape_date_results = cur.fetchall()
 			if scrape_date_results == ():
 				categories_to_scrape.append([category_url, start_rank])
@@ -438,8 +481,11 @@ def calc_categories_to_scrape(days=5):
 			
 
 def save_product(product_data):
-	"""Saves data to database, product_data in format [category_url, rank, asin, product_name, manufacturer_name, price, selling_status, product_url, scrape_date]"""
-	category_url, rank, asin, product_name, manufacturer_name, price, selling_status, product_url, scrape_date = product_data
+	"""Saves data to database, product_data in format [category_url, rank, \
+	asin, product_name, manufacturer_name, price, selling_status, product_url, \
+	scrape_date]"""
+	category_url, rank, asin, product_name, manufacturer_name, price, \
+	selling_status, product_url, scrape_date = product_data
 	print category_url
 	print rank
 	print product_name
@@ -450,35 +496,49 @@ def save_product(product_data):
 		cur = con.cursor()
 	
 		#Check if manufacturer exists, if not create it
-		cur.execute("SELECT * FROM manufacturers WHERE manufacturer_name='%s'" % manufacturer_name)
+		cur.execute("SELECT * FROM manufacturers WHERE manufacturer_name='%s'" \
+			% manufacturer_name)
 		results = cur.fetchall()
 		if results == ():
-			cur.execute("INSERT INTO manufacturers(manufacturer_name) VALUES('%s')" % (manufacturer_name))
+			cur.execute("INSERT INTO manufacturers(manufacturer_name) \
+				VALUES('%s')" % (manufacturer_name))
 			con.commit()
 	
 		#Check to see if product exists, if not create it
 		cur.execute("SELECT * FROM products WHERE asin='%s'" % asin)
 		results = cur.fetchall()
 		if results == ():
-			cur.execute("INSERT INTO products(asin, product_name, product_url, manufacturer_name) VALUES('%s', '%s', '%s', '%s')" % (asin, product_name, product_url, manufacturer_name))
+			cur.execute("INSERT INTO products(asin, product_name, product_url, \
+				manufacturer_name) VALUES('%s', '%s', '%s', '%s')" % (asin, \
+				product_name, product_url, manufacturer_name))
 			con.commit()
 
 		#Check to see if category exists, if not create it
-		cur.execute("SELECT * FROM categories WHERE category_url='%s'" % category_url)
+		cur.execute("SELECT * FROM categories WHERE category_url='%s'" % \
+			category_url)
 		results = cur.fetchall()
 		if results == ():
 			category_name = extract_category(category_url)
-			cur.execute("INSERT INTO categories(category_url, category_name) VALUES('%s', '%s')" % (category_url, category_name))
+			cur.execute("INSERT INTO categories(category_url, category_name) \
+				VALUES('%s', '%s')" % (category_url, category_name))
 			con.commit()
 	
 		#Create the ranking if it doesnt exist
-		cur.execute("SELECT * FROM rankings WHERE asin='%s' AND scrape_date='%s' AND category_url='%s'" % (asin, scrape_date, category_url))
+		cur.execute("SELECT * FROM rankings WHERE asin='%s' AND \
+			scrape_date='%s' AND category_url='%s'" % (asin, scrape_date, \
+				category_url))
 		results = cur.fetchall()
 		if results == () and price:
-			cur.execute("INSERT INTO rankings(scrape_date, price, rank, asin, category_url, selling_status) VALUES('%s', '%s', '%s', '%s', '%s', '%s')" % (scrape_date, price, rank, asin, category_url, selling_status))
+			cur.execute("INSERT INTO rankings(scrape_date, price, rank, asin, \
+				category_url, selling_status) VALUES('%s', '%s', '%s', '%s', \
+				'%s', '%s')" % (scrape_date, price, rank, asin, category_url, \
+				selling_status))
 			con.commit()
 		elif results == ():
-			cur.execute("INSERT INTO rankings(scrape_date, rank, asin, category_url, selling_status) VALUES('%s', '%s', '%s', '%s', '%s')" % (scrape_date, rank, asin, category_url, selling_status))
+			cur.execute("INSERT INTO rankings(scrape_date, rank, asin, \
+				category_url, selling_status) VALUES('%s', '%s', '%s', '%s', \
+				'%s')" % (scrape_date, rank, asin, category_url, \
+				selling_status))
 			con.commit()
 		return True
 
@@ -486,14 +546,16 @@ def save_product(product_data):
 #-- Helper Functions --#
 def day_delta(date_str, compared_date_str = "Today"):
 	"""Takes a date in str and returns date - today (or compared date if given)
-	(ie negative if compared_date is after date, positive if compared_date if before date)
-	date and compared date are to be provided in the format YYYY-MM-DD as a string"""
+	(ie negative if compared_date is after date, positive if compared_date if 
+	before date) date and compared date are to be provided in the format 
+	YYYY-MM-DD as a string"""
 	date_str = str(date_str)
 	compared_date_str = str(compared_date_str)
 	if compared_date_str == "Today":
 		compared_date_str = str(datetime.date.today())
 	date = datetime.datetime.strptime(date_str, '%Y-%m-%d').date()
-	compared_date = datetime.datetime.strptime(compared_date_str, '%Y-%m-%d').date()
+	compared_date = datetime.datetime.strptime(compared_date_str, \
+		'%Y-%m-%d').date()
 	delta = date - compared_date
 	return delta.days
 
@@ -517,7 +579,8 @@ def extract_asin(url):
 	return "Error"
 
 
-def sendMail(message, subject='Status message from AMZN_Scrape', from_address='amzn_scrape@domain.com', to_address='your.name@domain.com'):
+def sendMail(message, subject='Status message from AMZN_Scrape', \
+	from_address='amzn_scrape@domain.com', to_address='your.name@domain.com'):
 	"""Sends email"""
 	sendmail_location = "/usr/sbin/sendmail"
 	p = os.popen("%s -t" % sendmail_location, "w")
@@ -580,7 +643,8 @@ def hit_next(rank_page_lxml):
 def initialize_browser():
 	"""Returns a fully setup mechanize browser instance"""
 	br = mechanize.Browser()
-	br.addheaders = [("User-agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.6; rv:9.0.1) Gecko/20100101 Firefox/9.0.1")]
+	br.addheaders = [("User-agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X \
+		10.6; rv:9.0.1) Gecko/20100101 Firefox/9.0.1")]
 	return br
 
 
@@ -602,7 +666,8 @@ def log(message, memory_check = False):
 	"""Logs to a local file log.txt"""
 	with io.open('log.txt', 'a') as logfile:
 		if memory_check:
-			logfile.write(unicode(datetime.datetime.now()) + '|' + unicode(mem_check()) + '|' + message + '|' + '\n')
+			logfile.write(unicode(datetime.datetime.now()) + '|' + \
+				unicode(mem_check()) + '|' + message + '|' + '\n')
 		else:
 			logfile.write(unicode(datetime.datetime.now()) + '|' + message + '\n')
 
@@ -631,7 +696,9 @@ if __name__=="__main__" and not ANALYZE:
 		create_report()
 	except Exception, e:
 		print "AMZN_Scrape Crashed!!!"
-		email_message = "At " + unicode(datetime.datetime.now()) + " AMZN_Scrape crashed:" + '\n' + unicode(e) + '\n' + unicode(traceback.print_exc()) + '\n'
+		email_message = "At " + unicode(datetime.datetime.now()) + " AMZN_Scrape \
+		crashed:" + '\n' + unicode(e) + '\n' + unicode(traceback.print_exc()) + \
+		'\n'
 		sendMail(email_message, "AMZN_Scrape Crashed!!!")
 		log("AMZN_Scrape Crashed!!!")
 		log(e)
