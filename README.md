@@ -8,3 +8,6 @@ WARNING: Scraping data from Amazon.com is against their terms of service. Use at
 NOTE: If the design of the Amazon.com's product catalog changes the scraper will break; this is not intended to be a production system.
 
 Built using: Python 2.8.7 and MySQL 5
+
+
+To use rename settings-default.config to settings.config and enter your settings.
