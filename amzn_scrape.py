@@ -12,7 +12,7 @@ except:
 
 #Analyze mode - only analyzes, does not scrape
 if '--analyze' in sys.argv or '-a' in sys.argv:
-	print "ANALYZE!!!"
+	print "ANALYZE ONLY!!!"
 	ANALYZE = True
 else:
 	ANALYZE = False

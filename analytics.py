@@ -1,4 +1,10 @@
-import dbdo, io, os, helpers
+import dbdo, io, os, helpers, datetime
+
+def run_analytics():
+	"""Runs analytics on the rank data in the database and emails a list of the 
+	top 500 fastest rising products
+	"""
+	return calc_lin_reg()
 
 def create_report(num_products=500):
 	"""Creates and mails a report of the top num_products=500 fastest moving 
@@ -18,11 +24,12 @@ def create_report(num_products=500):
 				+ '|' + unicode(line[3]).strip() + '|' + \
 				unicode(line[4]).strip() + '|' + unicode(line[5]).strip() \
 				+ '|' + "\n")
-	return file_path
+	print "Top 500 Fastest Moving Products Report has been generated in " \
+	+ file_path
+	return True
 
-def run_analytics():
-	"""Runs analytics on the rank data in the database and emails a list of the 
-	top 500 fastest rising products
+def calc_lin_reg():
+	"""Calculates the linear regression slope and adds it to database
 	1. Pull all asins and calculate slope
 	2. update the value for the slope in products table
 	3. when done updating all slopes, return asin's sorted dsc by slope...

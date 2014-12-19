@@ -22,7 +22,7 @@ def get_category_name(category_url):
 
 def get_fastest_moving_products(num_products):
 	"""Gets the fastest moving products by slope"""
-	cur = execute_sql("SELECT slopes.slope, slopes.asin, products.product_name,\
+	return execute_sql("SELECT slopes.slope, slopes.asin, products.product_name,\
 		products.manufacturer_name, categories.category_name, \
 		products.product_url FROM slopes INNER JOIN products ON \
 		slopes.asin=products.asin INNER JOIN categories ON \
